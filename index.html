@@ -72,7 +72,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;}
     </div>
 
     <div class="card">
-        <div class="input-group">
+        <div class="input-group" id="secretWordGroup">
             <label for="secretWord">Secret Word</label>
             <input type="text" id="secretWord" placeholder="Enter the secret word...">
         </div>
@@ -119,6 +119,7 @@ const statusDiv = document.getElementById('status');
 const winnerDisplay = document.getElementById('winnerDisplay');
 const winnerName = document.getElementById('winnerName');
 const winnerWord = document.getElementById('winnerWord');
+const secretWordGroup = document.getElementById('secretWordGroup');
 
 // Canvas elements
 const canvas = document.getElementById('drawingCanvas');
@@ -200,6 +201,9 @@ function startMonitoring(){
     stopBtn.disabled=false;
     statusDiv.textContent='Monitoring...';
     winnerDisplay.classList.remove('show');
+
+    // Hide secret word input
+    secretWordGroup.style.display = 'none';
 
     // Show canvas and controls
     canvas.style.display='block';
