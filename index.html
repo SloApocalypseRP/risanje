@@ -6,47 +6,48 @@
 <title>Pictionary YouTube Live</title>
 <meta name="description" content="Draw & Guess game using YouTube comments">
 <style>
-    * {margin:0;padding:0;box-sizing:border-box;}
-    body {font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-        background: linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
-        color:#e2e8f0;min-height:100vh;padding:24px;}
-    .container {max-width:1000px;margin:0 auto;}
-    .header{text-align:center;margin-bottom:24px;}
-    h1{font-size:2.5rem;color:#60a5fa;margin-bottom:8px;text-shadow:0 0 20px rgba(59,130,246,0.5);}
-    .subtitle{font-size:1.1rem;color:#94a3b8;}
-    .card{background: rgba(30,41,59,0.6); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:24px; margin-bottom:24px; backdrop-filter: blur(10px);}
-    .input-group{margin-bottom:16px;}
-    label{display:block;margin-bottom:8px;font-weight:500;color:#cbd5e1;}
-    input, select{width:100%;padding:12px 16px;background:rgba(15,23,42,0.8);border:2px solid rgba(59,130,246,0.3);border-radius:8px;color:#e2e8f0;font-size:16px;transition:all 0.3s;}
-    input:focus, select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 20px rgba(59,130,246,0.3);}
-    .button-group{display:flex;gap:12px;margin-top:16px;}
-    button{flex:1;padding:16px;font-size:16px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
-    .btn-start{background: linear-gradient(135deg,#3b82f6,#2563eb);color:white;}
-    .btn-start:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(59,130,246,0.4);}
-    .btn-stop{background: linear-gradient(135deg,#ef4444,#dc2626);color:white;}
-    .btn-stop:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(239,68,68,0.4);}
-    button:disabled{opacity:0.5;cursor:not-allowed;}
-    .status{text-align:center;margin-top:16px;padding:12px;background:rgba(59,130,246,0.1);border-radius:8px;font-weight:500;}
-    #drawingCanvas{display:none;border:2px solid #3b82f6;border-radius:12px;margin-bottom:16px;background:#fff;}
-    .controls{display:flex;gap:12px;margin-bottom:16px;}
-    .winner-display{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.5s;}
-    .winner-display.show{display:flex;}
-    .winner-content{text-align:center;padding:48px;animation:scaleIn 0.6s cubic-bezier(0.34,1.56,0.64,1);}
-    .winner-emoji{font-size:120px;margin-bottom:24px;animation:bounce 1s infinite;}
-    .winner-title{font-size:3rem;font-weight:bold;margin-bottom:24px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 40px rgba(251,191,36,0.5);}
-    .winner-text{font-size:1.5rem;margin-bottom:12px;color:#e2e8f0;}
-    .winner-word{font-size:2rem;font-weight:bold;color:#3b82f6;text-shadow:0 0 30px rgba(59,130,246,0.7);}
-    .toast{position:fixed;bottom:24px;right:24px;background:rgba(30,41,59,0.95);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:16px 24px;max-width:400px;z-index:1001;animation:slideIn 0.3s;backdrop-filter:blur(10px);}
-    .toast.error{border-color:rgba(239,68,68,0.5);}
-    .toast-title{font-weight:600;margin-bottom:4px;color:#60a5fa;}
-    .toast.error .toast-title{color:#f87171;}
-    .toast-description{color:#cbd5e1;font-size:14px;}
-    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-    @keyframes scaleIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
-    @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
-    @keyframes slideIn{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}
-    .confetti{position:fixed;width:10px;height:10px;background:#fbbf24;position:absolute;animation:confetti-fall 3s linear infinite;}
-    @keyframes confetti-fall{to{transform:translateY(100vh) rotate(360deg);opacity:0;}}
+* {margin:0;padding:0;box-sizing:border-box;}
+body {font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      background: linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+      color:#e2e8f0;min-height:100vh;padding:24px;}
+.container {max-width:1000px;margin:0 auto;}
+.header{text-align:center;margin-bottom:24px;}
+h1{font-size:2.5rem;color:#60a5fa;margin-bottom:8px;text-shadow:0 0 20px rgba(59,130,246,0.5);}
+.subtitle{font-size:1.1rem;color:#94a3b8;}
+.card{background: rgba(30,41,59,0.6); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:24px; margin-bottom:24px; backdrop-filter: blur(10px);}
+.input-group{margin-bottom:16px;}
+label{display:block;margin-bottom:8px;font-weight:500;color:#cbd5e1;}
+input, select{width:100%;padding:12px 16px;background:rgba(15,23,42,0.8);border:2px solid rgba(59,130,246,0.3);border-radius:8px;color:#e2e8f0;font-size:16px;transition:all 0.3s;}
+input:focus, select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 20px rgba(59,130,246,0.3);}
+.button-group{display:flex;gap:12px;margin-top:16px;}
+button{flex:1;padding:16px;font-size:16px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
+.btn-start{background: linear-gradient(135deg,#3b82f6,#2563eb);color:white;}
+.btn-start:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(59,130,246,0.4);}
+.btn-stop{background: linear-gradient(135deg,#ef4444,#dc2626);color:white;}
+.btn-stop:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(239,68,68,0.4);}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+.status{text-align:center;margin-top:16px;padding:12px;background:rgba(59,130,246,0.1);border-radius:8px;font-weight:500;}
+#drawingCanvas{display:none;border:2px solid #3b82f6;border-radius:12px;margin-bottom:16px;background:#fff;cursor:crosshair;}
+.controls{display:none;gap:12px;margin-bottom:16px;}
+.controls button, .controls select{flex:none;}
+.winner-display{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.5s;}
+.winner-display.show{display:flex;}
+.winner-content{text-align:center;padding:48px;animation:scaleIn 0.6s cubic-bezier(0.34,1.56,0.64,1);}
+.winner-emoji{font-size:120px;margin-bottom:24px;animation:bounce 1s infinite;}
+.winner-title{font-size:3rem;font-weight:bold;margin-bottom:24px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 40px rgba(251,191,36,0.5);}
+.winner-text{font-size:1.5rem;margin-bottom:12px;color:#e2e8f0;}
+.winner-word{font-size:2rem;font-weight:bold;color:#3b82f6;text-shadow:0 0 30px rgba(59,130,246,0.7);}
+.toast{position:fixed;bottom:24px;right:24px;background:rgba(30,41,59,0.95);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:16px 24px;max-width:400px;z-index:1001;animation:slideIn 0.3s;backdrop-filter:blur(10px);}
+.toast.error{border-color:rgba(239,68,68,0.5);}
+.toast-title{font-weight:600;margin-bottom:4px;color:#60a5fa;}
+.toast.error .toast-title{color:#f87171;}
+.toast-description{color:#cbd5e1;font-size:14px;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes scaleIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
+@keyframes slideIn{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.confetti{position:fixed;width:10px;height:10px;background:#fbbf24;position:absolute;animation:confetti-fall 3s linear infinite;}
+@keyframes confetti-fall{to{transform:translateY(100vh) rotate(360deg);opacity:0;}}
 </style>
 </head>
 <body>
@@ -58,7 +59,7 @@
 
     <div class="card">
         <canvas id="drawingCanvas" width="800" height="400"></canvas>
-        <div class="controls" id="drawingControls" style="display:none;">
+        <div class="controls" id="drawingControls">
             <select id="colorPicker">
                 <option value="#000000">Black</option>
                 <option value="#3b82f6">Blue</option>
@@ -128,12 +129,6 @@ const drawingControls = document.getElementById('drawingControls');
 
 let drawing = false;
 
-canvas.addEventListener('mousedown', e => {drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY);});
-canvas.addEventListener('mousemove', e => {if(drawing){ctx.strokeStyle=colorPicker.value;ctx.lineWidth=4;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}});
-canvas.addEventListener('mouseup', e => {drawing=false;});
-canvas.addEventListener('mouseout', e => {drawing=false;});
-clearCanvasBtn.addEventListener('click', ()=>ctx.clearRect(0,0,canvas.width,canvas.height));
-
 function showToast(title, description, isError=false){
     const toast=document.createElement('div');
     toast.className='toast'+(isError?' error':'');
@@ -199,6 +194,7 @@ function startMonitoring(){
     if(!secretWord){showToast('Missing Secret Word','Please enter a secret word first.',true);return;}
     if(!apiKey){showToast('Missing API Key','Please enter your YouTube API key.',true);return;}
     if(!videoId){showToast('Missing Video ID','Please enter a YouTube video ID.',true);return;}
+
     checkedComments.clear();
     startBtn.disabled=true;
     stopBtn.disabled=false;
@@ -208,10 +204,17 @@ function startMonitoring(){
     // Show canvas and controls
     canvas.style.display='block';
     drawingControls.style.display='flex';
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Add drawing listeners
+    canvas.onmousedown = e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+    canvas.onmousemove = e => { if(drawing){ ctx.strokeStyle=colorPicker.value; ctx.lineWidth=4; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); } };
+    canvas.onmouseup = canvas.onmouseout = () => { drawing = false; };
+    clearCanvasBtn.onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
 
     showToast('Monitoring Started','Now checking for the secret word in comments...');
     checkComments();
-    monitoringInterval=setInterval(checkComments,10000);
+    monitoringInterval = setInterval(checkComments,10000);
 }
 
 function stopMonitoring(){
