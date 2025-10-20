@@ -4,233 +4,128 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pictionary YouTube Live</title>
-<meta name="description" content="Draw & Guess game using YouTube comments">
 <style>
-* {margin:0;padding:0;box-sizing:border-box;}
-body {font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-      background: linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
-      color:#e2e8f0;min-height:100vh;padding:24px;}
-.container {max-width:1000px;margin:0 auto;}
-.header{text-align:center;margin-bottom:24px;}
-h1{font-size:2.5rem;color:#60a5fa;margin-bottom:8px;text-shadow:0 0 20px rgba(59,130,246,0.5);}
-.subtitle{font-size:1.1rem;color:#94a3b8;}
-.card{background: rgba(30,41,59,0.6); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:24px; margin-bottom:24px; backdrop-filter: blur(10px);}
-.input-group{margin-bottom:16px;}
-label{display:block;margin-bottom:8px;font-weight:500;color:#cbd5e1;}
-input, select{width:100%;padding:12px 16px;background:rgba(15,23,42,0.8);border:2px solid rgba(59,130,246,0.3);border-radius:8px;color:#e2e8f0;font-size:16px;transition:all 0.3s;}
-input:focus, select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 20px rgba(59,130,246,0.3);}
-.button-group{display:flex;gap:12px;margin-top:16px;}
-button{flex:1;padding:16px;font-size:16px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
-.btn-start{background: linear-gradient(135deg,#3b82f6,#2563eb);color:white;}
-.btn-start:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(59,130,246,0.4);}
-.btn-stop{background: linear-gradient(135deg,#ef4444,#dc2626);color:white;}
-.btn-stop:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(239,68,68,0.4);}
-button:disabled{opacity:0.5;cursor:not-allowed;}
-.status{text-align:center;margin-top:16px;padding:12px;background:rgba(59,130,246,0.1);border-radius:8px;font-weight:500;}
-#drawingCanvas{display:none;border:2px solid #3b82f6;border-radius:12px;margin-bottom:16px;background:#fff;cursor:crosshair;}
-.controls{display:none;gap:12px;margin-bottom:16px;}
-.controls button, .controls select{flex:none;}
-.winner-display{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.5s;}
-.winner-display.show{display:flex;}
-.winner-content{text-align:center;padding:48px;animation:scaleIn 0.6s cubic-bezier(0.34,1.56,0.64,1);}
-.winner-emoji{font-size:120px;margin-bottom:24px;animation:bounce 1s infinite;}
-.winner-title{font-size:3rem;font-weight:bold;margin-bottom:24px;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 40px rgba(251,191,36,0.5);}
-.winner-text{font-size:1.5rem;margin-bottom:12px;color:#e2e8f0;}
-.winner-word{font-size:2rem;font-weight:bold;color:#3b82f6;text-shadow:0 0 30px rgba(59,130,246,0.7);}
-.toast{position:fixed;bottom:24px;right:24px;background:rgba(30,41,59,0.95);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:16px 24px;max-width:400px;z-index:1001;animation:slideIn 0.3s;backdrop-filter:blur(10px);}
-.toast.error{border-color:rgba(239,68,68,0.5);}
-.toast-title{font-weight:600;margin-bottom:4px;color:#60a5fa;}
-.toast.error .toast-title{color:#f87171;}
-.toast-description{color:#cbd5e1;font-size:14px;}
-@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-@keyframes scaleIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
-@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
-@keyframes slideIn{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}
-.confetti{position:fixed;width:10px;height:10px;background:#fbbf24;position:absolute;animation:confetti-fall 3s linear infinite;}
-@keyframes confetti-fall{to{transform:translateY(100vh) rotate(360deg);opacity:0;}}
+body{font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:20px}
+h1{color:#60a5fa;text-align:center}
+input{width:100%;padding:10px;margin:6px 0;background:#1e293b;border:1px solid #3b82f6;color:white;border-radius:6px}
+button{padding:10px 16px;border:none;border-radius:6px;background:#3b82f6;color:white;cursor:pointer;margin-right:10px}
+button:disabled{opacity:0.5;cursor:not-allowed}
+#drawingCanvas{display:none;border:2px solid #3b82f6;border-radius:8px;background:white;margin:10px 0}
+.controls{display:none;margin-bottom:10px}
+.status{text-align:center;margin-top:10px}
 </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>Pictionary YouTube Live</h1>
-        <p class="subtitle">Draw something and viewers guess in YouTube comments!</p>
-    </div>
+<h1>Pictionary YouTube Live</h1>
 
-    <div class="card">
-        <canvas id="drawingCanvas" width="800" height="400"></canvas>
-        <div class="controls" id="drawingControls">
-            <select id="colorPicker">
-                <option value="#000000">Black</option>
-                <option value="#3b82f6">Blue</option>
-                <option value="#ef4444">Red</option>
-                <option value="#10b981">Green</option>
-                <option value="#fbbf24">Yellow</option>
-            </select>
-            <button id="clearCanvasBtn">Clear</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="input-group" id="secretWordGroup">
-            <label for="secretWord">Secret Word</label>
-            <input type="text" id="secretWord" placeholder="Enter the secret word...">
-        </div>
-        <div class="input-group">
-            <label for="apiKey">YouTube API Key</label>
-            <input type="password" id="apiKey" placeholder="Enter your YouTube Data API v3 key...">
-        </div>
-        <div class="input-group">
-            <label for="videoId">Video ID</label>
-            <input type="text" id="videoId" placeholder="Enter YouTube video ID...">
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="button-group">
-            <button class="btn-start" id="startBtn">Start Monitoring</button>
-            <button class="btn-stop" id="stopBtn" disabled>Stop Monitoring</button>
-        </div>
-        <div class="status" id="status">Idle</div>
-    </div>
+<div>
+  <label>Secret Word:</label>
+  <input type="text" id="secretWord" placeholder="Enter secret word">
+  <label>YouTube API Key:</label>
+  <input type="password" id="apiKey" placeholder="Enter API key">
+  <label>Livestream Video ID:</label>
+  <input type="text" id="videoId" placeholder="Enter live video ID">
 </div>
 
-<div class="winner-display" id="winnerDisplay">
-    <div class="winner-content">
-        <div class="winner-emoji">🎉</div>
-        <h2 class="winner-title">WINNER!</h2>
-        <p class="winner-text">The winner is <strong id="winnerName"></strong></p>
-        <p class="winner-text">They guessed the word:</p>
-        <p class="winner-word" id="winnerWord"></p>
-    </div>
+<button id="startBtn">Start Monitoring</button>
+<button id="stopBtn" disabled>Stop Monitoring</button>
+<div class="status" id="status">Idle</div>
+
+<canvas id="drawingCanvas" width="800" height="400"></canvas>
+<div class="controls" id="drawingControls">
+  <select id="colorPicker">
+    <option value="#000000">Black</option>
+    <option value="#3b82f6">Blue</option>
+    <option value="#ef4444">Red</option>
+    <option value="#10b981">Green</option>
+    <option value="#fbbf24">Yellow</option>
+  </select>
+  <button id="clearCanvasBtn">Clear</button>
 </div>
 
 <script>
-let monitoringInterval = null;
-let checkedComments = new Set();
+let interval=null, liveChatId=null, checkedMessages=new Set();
+const apiKeyInput=document.getElementById('apiKey');
+const videoIdInput=document.getElementById('videoId');
+const secretWordInput=document.getElementById('secretWord');
+const startBtn=document.getElementById('startBtn');
+const stopBtn=document.getElementById('stopBtn');
+const statusDiv=document.getElementById('status');
+const canvas=document.getElementById('drawingCanvas');
+const ctx=canvas.getContext('2d');
+const colorPicker=document.getElementById('colorPicker');
+const clearCanvasBtn=document.getElementById('clearCanvasBtn');
+const drawingControls=document.getElementById('drawingControls');
+let drawing=false;
 
-// DOM elements
-const secretWordInput = document.getElementById('secretWord');
-const apiKeyInput = document.getElementById('apiKey');
-const videoIdInput = document.getElementById('videoId');
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const statusDiv = document.getElementById('status');
-const winnerDisplay = document.getElementById('winnerDisplay');
-const winnerName = document.getElementById('winnerName');
-const winnerWord = document.getElementById('winnerWord');
-const secretWordGroup = document.getElementById('secretWordGroup');
-
-// Canvas elements
-const canvas = document.getElementById('drawingCanvas');
-const ctx = canvas.getContext('2d');
-const colorPicker = document.getElementById('colorPicker');
-const clearCanvasBtn = document.getElementById('clearCanvasBtn');
-const drawingControls = document.getElementById('drawingControls');
-
-let drawing = false;
-
-function showToast(title, description, isError=false){
-    const toast=document.createElement('div');
-    toast.className='toast'+(isError?' error':'');
-    toast.innerHTML=`<div class="toast-title">${title}</div><div class="toast-description">${description}</div>`;
-    document.body.appendChild(toast);
-    setTimeout(()=>toast.remove(),4000);
+async function getLiveChatId(videoId, apiKey){
+  const res=await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
+  const data=await res.json();
+  if(!data.items||!data.items.length) throw new Error("Invalid Video ID or not a livestream");
+  return data.items[0].liveStreamingDetails.activeLiveChatId;
 }
 
-function createConfetti(){
-    for(let i=0;i<100;i++){
-        setTimeout(()=>{
-            const confetti=document.createElement('div');
-            confetti.className='confetti';
-            confetti.style.left=Math.random()*100+'%';
-            confetti.style.background=['#fbbf24','#3b82f6','#ef4444','#10b981'][Math.floor(Math.random()*4)];
-            confetti.style.animationDelay=Math.random()*2+'s';
-            winnerDisplay.appendChild(confetti);
-            setTimeout(()=>confetti.remove(),3000);
-        }, i*30);
-    }
-}
-
-async function checkComments(){
-    const secretWord = secretWordInput.value.trim().toLowerCase();
-    const apiKey = apiKeyInput.value.trim();
-    const videoId = videoIdInput.value.trim();
-    if(!secretWord||!apiKey||!videoId) return;
-    try{
-        const response=await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}&maxResults=100&order=time`);
-        if(!response.ok) throw new Error('Failed to fetch comments');
-        const data=await response.json();
-        if(data.items){
-            for(const item of data.items){
-                const comment=item.snippet.topLevelComment.snippet;
-                const commentId=item.id;
-                const commentText=comment.textOriginal.toLowerCase().trim();
-                const username=comment.authorDisplayName;
-                if(checkedComments.has(commentId)) continue;
-                checkedComments.add(commentId);
-                if(commentText===secretWord){
-                    winnerName.textContent=username;
-                    winnerWord.textContent=secretWordInput.value;
-                    winnerDisplay.classList.add('show');
-                    createConfetti();
-                    stopMonitoring();
-                    showToast('🎉 Winner Found!', `${username} guessed the secret word!`);
-                    return;
-                }
-            }
-        }
-        statusDiv.textContent=`Monitoring... (Last check: ${new Date().toLocaleTimeString()})`;
-    } catch(e){
-        console.error(e);
-        showToast('Error','Failed to check comments. Verify API key and video ID.',true);
+async function checkLiveChat(){
+  const apiKey=apiKeyInput.value.trim();
+  const secretWord=secretWordInput.value.trim().toLowerCase();
+  if(!liveChatId) return;
+  const res=await fetch(`https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`);
+  const data=await res.json();
+  if(data.items){
+    for(const item of data.items){
+      const msgId=item.id;
+      const msg=item.snippet.displayMessage.toLowerCase().trim();
+      const user=item.authorDetails.displayName;
+      if(checkedMessages.has(msgId)) continue;
+      checkedMessages.add(msgId);
+      if(msg===secretWord){
+        alert(`🎉 WINNER: ${user} guessed the word "${secretWordInput.value}"`);
         stopMonitoring();
+      }
     }
+  }
+  statusDiv.textContent=`Monitoring live chat... (${new Date().toLocaleTimeString()})`;
 }
 
 function startMonitoring(){
-    const secretWord = secretWordInput.value.trim();
-    const apiKey = apiKeyInput.value.trim();
-    const videoId = videoIdInput.value.trim();
-    if(!secretWord){showToast('Missing Secret Word','Please enter a secret word first.',true);return;}
-    if(!apiKey){showToast('Missing API Key','Please enter your YouTube API key.',true);return;}
-    if(!videoId){showToast('Missing Video ID','Please enter a YouTube video ID.',true);return;}
+  const apiKey=apiKeyInput.value.trim();
+  const videoId=videoIdInput.value.trim();
+  const secretWord=secretWordInput.value.trim();
+  if(!apiKey||!videoId||!secretWord){alert("Please fill all fields");return;}
 
-    checkedComments.clear();
-    startBtn.disabled=true;
-    stopBtn.disabled=false;
-    statusDiv.textContent='Monitoring...';
-    winnerDisplay.classList.remove('show');
+  document.getElementById('secretWord').style.display='none'; // hide secret word
+  canvas.style.display='block';
+  drawingControls.style.display='flex';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // Hide secret word input
-    secretWordGroup.style.display = 'none';
+  canvas.onmousedown=e=>{drawing=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY);};
+  canvas.onmousemove=e=>{if(drawing){ctx.strokeStyle=colorPicker.value;ctx.lineWidth=4;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}};
+  canvas.onmouseup=canvas.onmouseout=()=>{drawing=false;};
+  clearCanvasBtn.onclick=()=>ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // Show canvas and controls
-    canvas.style.display='block';
-    drawingControls.style.display='flex';
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+  startBtn.disabled=true;stopBtn.disabled=false;
+  statusDiv.textContent='Getting live chat...';
+  checkedMessages.clear();
 
-    // Add drawing listeners
-    canvas.onmousedown = e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-    canvas.onmousemove = e => { if(drawing){ ctx.strokeStyle=colorPicker.value; ctx.lineWidth=4; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); } };
-    canvas.onmouseup = canvas.onmouseout = () => { drawing = false; };
-    clearCanvasBtn.onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    showToast('Monitoring Started','Now checking for the secret word in comments...');
-    checkComments();
-    monitoringInterval = setInterval(checkComments,10000);
+  getLiveChatId(videoId,apiKey).then(id=>{
+    liveChatId=id;
+    statusDiv.textContent='Monitoring live chat...';
+    checkLiveChat();
+    interval=setInterval(checkLiveChat,5000);
+  }).catch(e=>{
+    alert("Error: "+e.message);
+    stopMonitoring();
+  });
 }
 
 function stopMonitoring(){
-    if(monitoringInterval){clearInterval(monitoringInterval);monitoringInterval=null;}
-    startBtn.disabled=false;
-    stopBtn.disabled=true;
-    statusDiv.textContent='Stopped';
-    showToast('Monitoring Stopped','Comment monitoring has been stopped.');
+  if(interval){clearInterval(interval);interval=null;}
+  startBtn.disabled=false;stopBtn.disabled=true;
+  statusDiv.textContent='Stopped';
 }
 
-startBtn.addEventListener('click',startMonitoring);
-stopBtn.addEventListener('click',stopMonitoring);
+startBtn.onclick=startMonitoring;
+stopBtn.onclick=stopMonitoring;
 </script>
 </body>
 </html>
