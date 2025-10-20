@@ -13,6 +13,20 @@ button:disabled{opacity:0.5;cursor:not-allowed}
 #drawingCanvas{display:none;border:2px solid #3b82f6;border-radius:8px;background:white;margin:10px 0}
 .controls{display:none;margin-bottom:10px}
 .status{text-align:center;margin-top:10px}
+#errorBox{
+  position:fixed;
+  top:20px;
+  left:20px;
+  background:rgba(239,68,68,0.2);
+  border:1px solid rgba(239,68,68,0.5);
+  color:#fca5a5;
+  padding:12px 16px;
+  border-radius:8px;
+  max-width:300px;
+  font-size:14px;
+  display:none;
+  white-space:pre-wrap;
+}
 </style>
 </head>
 <body>
@@ -43,6 +57,8 @@ button:disabled{opacity:0.5;cursor:not-allowed}
   <button id="clearCanvasBtn">Clear</button>
 </div>
 
+<div id="errorBox"></div>
+
 <script>
 let interval=null, liveChatId=null, checkedMessages=new Set();
 const apiKeyInput=document.getElementById('apiKey');
@@ -56,48 +72,77 @@ const ctx=canvas.getContext('2d');
 const colorPicker=document.getElementById('colorPicker');
 const clearCanvasBtn=document.getElementById('clearCanvasBtn');
 const drawingControls=document.getElementById('drawingControls');
+const errorBox=document.getElementById('errorBox');
 let drawing=false;
 
-async function getLiveChatId(videoId, apiKey){
-  const res=await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
-  const data=await res.json();
-  if(!data.items||!data.items.length) throw new Error("Invalid Video ID or not a livestream");
-  return data.items[0].liveStreamingDetails.activeLiveChatId;
+// prikaz errorja
+function showError(msg){
+  console.error(msg);
+  errorBox.textContent = "❌ " + msg;
+  errorBox.style.display='block';
+}
+
+// retry pridobivanje liveChatId
+async function getLiveChatId(videoId, apiKey, retries = 10) {
+  for (let i = 0; i < retries; i++) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
+    const data = await res.json();
+
+    if (data.items && data.items.length && data.items[0].liveStreamingDetails.activeLiveChatId) {
+      return data.items[0].liveStreamingDetails.activeLiveChatId;
+    }
+
+    showError("Waiting for liveChatId... attempt " + (i+1));
+    await new Promise(r => setTimeout(r, 5000)); // počakaj 5s
+  }
+  throw new Error("Live chat ID ni najden. Preveri, ali je stream res LIVE in ima omogočen chat.");
 }
 
 async function checkLiveChat(){
   const apiKey=apiKeyInput.value.trim();
   const secretWord=secretWordInput.value.trim().toLowerCase();
   if(!liveChatId) return;
-  const res=await fetch(`https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`);
-  const data=await res.json();
-  if(data.items){
-    for(const item of data.items){
-      const msgId=item.id;
-      const msg=item.snippet.displayMessage.toLowerCase().trim();
-      const user=item.authorDetails.displayName;
-      if(checkedMessages.has(msgId)) continue;
-      checkedMessages.add(msgId);
-      if(msg===secretWord){
-        alert(`🎉 WINNER: ${user} guessed the word "${secretWordInput.value}"`);
-        stopMonitoring();
+  try{
+    const res=await fetch(`https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`);
+    const data=await res.json();
+
+    if(data.error){
+      showError("API error: " + data.error.message);
+      return;
+    }
+
+    if(data.items){
+      for(const item of data.items){
+        const msgId=item.id;
+        const msg=item.snippet.displayMessage.toLowerCase().trim();
+        const user=item.authorDetails.displayName;
+        if(checkedMessages.has(msgId)) continue;
+        checkedMessages.add(msgId);
+        if(msg===secretWord){
+          alert(`🎉 WINNER: ${user} guessed the word "${secretWordInput.value}"`);
+          stopMonitoring();
+        }
       }
     }
+    statusDiv.textContent=`Monitoring live chat... (${new Date().toLocaleTimeString()})`;
+  }catch(e){
+    showError("Fetch error: "+e.message);
   }
-  statusDiv.textContent=`Monitoring live chat... (${new Date().toLocaleTimeString()})`;
 }
 
 function startMonitoring(){
   const apiKey=apiKeyInput.value.trim();
   const videoId=videoIdInput.value.trim();
   const secretWord=secretWordInput.value.trim();
-  if(!apiKey||!videoId||!secretWord){alert("Please fill all fields");return;}
+  errorBox.style.display='none';
+  if(!apiKey||!videoId||!secretWord){showError("Missing input fields!");return;}
 
-  document.getElementById('secretWord').style.display='none'; // hide secret word
+  document.getElementById('secretWord').style.display='none'; // skrij besedo
   canvas.style.display='block';
   drawingControls.style.display='flex';
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
+  // risanje
   canvas.onmousedown=e=>{drawing=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY);};
   canvas.onmousemove=e=>{if(drawing){ctx.strokeStyle=colorPicker.value;ctx.lineWidth=4;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}};
   canvas.onmouseup=canvas.onmouseout=()=>{drawing=false;};
@@ -109,11 +154,12 @@ function startMonitoring(){
 
   getLiveChatId(videoId,apiKey).then(id=>{
     liveChatId=id;
+    errorBox.style.display='none';
     statusDiv.textContent='Monitoring live chat...';
     checkLiveChat();
     interval=setInterval(checkLiveChat,5000);
   }).catch(e=>{
-    alert("Error: "+e.message);
+    showError(e.message);
     stopMonitoring();
   });
 }
