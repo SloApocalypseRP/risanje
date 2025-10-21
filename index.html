@@ -105,9 +105,14 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 let drawing=false;
 let lastX=0,lastY=0;
 
-canvas.addEventListener('mousedown',e=>{drawing=true;lastX=e.clientX;lastY=e.clientY;});
-canvas.addEventListener('mouseup',()=>drawing=false);
-canvas.addEventListener('mouseout',()=>drawing=false);
+ canvas.onmousedown=e=>{drawing=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY);};
+  canvas.onmousemove=e=>{if(drawing){ctx.strokeStyle=colorPicker.value;ctx.lineWidth=4;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}};
+  canvas.onmouseup=canvas.onmouseout=()=>{drawing=false;};
+  clearCanvasBtn.onclick=()=>ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  startBtn.disabled=true;stopBtn.disabled=false;
+  statusDiv.textContent='Getting live chat...';
+  checkedMessages.clear();
 
 canvas.addEventListener('mousemove',e=>{
     if(!drawing) return;
