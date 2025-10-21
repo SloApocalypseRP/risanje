@@ -3,175 +3,327 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pictionary YouTube Live</title>
+<title>YouTube Comment Contest + Drawing Mode</title>
 <style>
-body{font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:20px}
-h1{color:#60a5fa;text-align:center}
-input{width:100%;padding:10px;margin:6px 0;background:#1e293b;border:1px solid #3b82f6;color:white;border-radius:6px}
-button{padding:10px 16px;border:none;border-radius:6px;background:#3b82f6;color:white;cursor:pointer;margin-right:10px}
-button:disabled{opacity:0.5;cursor:not-allowed}
-#drawingCanvas{display:none;border:2px solid #3b82f6;border-radius:8px;background:white;margin:10px 0}
-.controls{display:none;margin-bottom:10px}
-.status{text-align:center;margin-top:10px}
-#errorBox{
-  position:fixed;
-  top:20px;
-  left:20px;
-  background:rgba(239,68,68,0.2);
-  border:1px solid rgba(239,68,68,0.5);
-  color:#fca5a5;
-  padding:12px 16px;
-  border-radius:8px;
-  max-width:300px;
-  font-size:14px;
-  display:none;
-  white-space:pre-wrap;
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #e2e8f0;
+        overflow: hidden;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 24px;
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .hidden { opacity: 0; pointer-events: none; transform: scale(0.9); }
+
+    h1 {
+        text-align: center;
+        font-size: 3rem;
+        color: #60a5fa;
+        margin-bottom: 24px;
+        text-shadow: 0 0 20px rgba(59,130,246,0.6);
+    }
+
+    .input-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; color: #cbd5e1; }
+    input {
+        width: 100%; padding: 12px 16px;
+        border: 2px solid rgba(59,130,246,0.3);
+        border-radius: 8px;
+        background: rgba(15,23,42,0.8);
+        color: #e2e8f0;
+    }
+    input:focus { outline: none; border-color: #3b82f6; }
+
+    button {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white; border: none;
+        padding: 16px 24px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        width: 100%;
+        margin-top: 12px;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(59,130,246,0.5); }
+
+    .status {
+        text-align: center;
+        margin-top: 16px;
+        padding: 12px;
+        background: rgba(59,130,246,0.1);
+        border-radius: 8px;
+    }
+
+    /* 🎨 Fullscreen Drawing Canvas */
+    #drawArea {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: #0f172a;
+        z-index: 10;
+        cursor: crosshair;
+    }
+
+    #toolbar {
+        display: none;
+        position: fixed;
+        bottom: 20px; left: 20px;
+        background: rgba(30,41,59,0.8);
+        border: 1px solid rgba(59,130,246,0.3);
+        border-radius: 12px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 11;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(59,130,246,0.3);
+    }
+
+    #colorPicker, #brushSize {
+        cursor: pointer;
+        border-radius: 8px;
+        background: transparent;
+    }
+
+    #clearCanvas {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        border: none; color: white;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    #clearCanvas:hover { box-shadow: 0 0 15px rgba(239,68,68,0.4); }
+
+    /* 🏆 Winner Popup */
+    .winner-display {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+        animation: fadeInBg 0.6s ease;
+    }
+
+    @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+
+    .winner-content {
+        text-align: center;
+        animation: popIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        padding: 40px;
+        background: rgba(30,41,59,0.9);
+        border: 2px solid rgba(59,130,246,0.5);
+        border-radius: 20px;
+        box-shadow: 0 0 40px rgba(59,130,246,0.6);
+    }
+
+    @keyframes popIn {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .winner-emoji { font-size: 100px; margin-bottom: 20px; animation: bounce 1.5s infinite; }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+
+    .winner-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #60a5fa;
+        margin-bottom: 12px;
+    }
+
+    .winner-text {
+        font-size: 1.2rem;
+        color: #e2e8f0;
+    }
+
+    .confetti {
+        position: fixed;
+        width: 8px; height: 8px;
+        background: #fbbf24;
+        animation: fall 3s linear forwards;
+        z-index: 101;
+    }
+
+    @keyframes fall {
+        from { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+        to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
 </style>
 </head>
 <body>
-<h1>Pictionary YouTube Live</h1>
 
-<div>
-  <label>Secret Word:</label>
-  <input type="text" id="secretWord" placeholder="Enter secret word">
-  <label>YouTube API Key:</label>
-  <input type="password" id="apiKey" placeholder="Enter API key">
-  <label>Livestream Video ID:</label>
-  <input type="text" id="videoId" placeholder="Enter live video ID">
+<div class="container" id="mainUI">
+    <h1>YouTube Comment Contest 🎨</h1>
+    <div class="input-group">
+        <label>Secret Word</label>
+        <input id="secretWord" placeholder="Enter the secret word...">
+    </div>
+    <div class="input-group">
+        <label>YouTube API Key</label>
+        <input type="password" id="apiKey" placeholder="Enter API key...">
+    </div>
+    <div class="input-group">
+        <label>Video ID</label>
+        <input id="videoId" placeholder="Enter live video ID...">
+    </div>
+    <button id="startBtn">Start Monitoring</button>
+    <div class="status" id="status">Idle</div>
 </div>
 
-<button id="startBtn">Start Monitoring</button>
-<button id="stopBtn" disabled>Stop Monitoring</button>
-<div class="status" id="status">Idle</div>
-
-<canvas id="drawingCanvas" width="800" height="400"></canvas>
-<div class="controls" id="drawingControls">
-  <select id="colorPicker">
-    <option value="#000000">Black</option>
-    <option value="#3b82f6">Blue</option>
-    <option value="#ef4444">Red</option>
-    <option value="#10b981">Green</option>
-    <option value="#fbbf24">Yellow</option>
-  </select>
-  <button id="clearCanvasBtn">Clear</button>
+<!-- 🎨 Drawing Canvas -->
+<canvas id="drawArea"></canvas>
+<div id="toolbar">
+    <input type="color" id="colorPicker" value="#3b82f6">
+    <input type="range" id="brushSize" min="1" max="50" value="5">
+    <button id="clearCanvas">Počisti</button>
 </div>
 
-<div id="errorBox"></div>
+<!-- 🏆 Winner -->
+<div class="winner-display" id="winnerDisplay">
+    <div class="winner-content">
+        <div class="winner-emoji">🎉</div>
+        <div class="winner-title">ZMAGOVALEC!</div>
+        <div class="winner-text">Uporabnik <strong id="winnerName"></strong> je uganil skrivno besedo:</div>
+        <div class="winner-text" style="margin-top:12px; font-size:1.5rem; color:#3b82f6;"><strong id="winnerWord"></strong></div>
+    </div>
+</div>
 
 <script>
-let interval=null, liveChatId=null, checkedMessages=new Set();
-const apiKeyInput=document.getElementById('apiKey');
-const videoIdInput=document.getElementById('videoId');
-const secretWordInput=document.getElementById('secretWord');
-const startBtn=document.getElementById('startBtn');
-const stopBtn=document.getElementById('stopBtn');
-const statusDiv=document.getElementById('status');
-const canvas=document.getElementById('drawingCanvas');
-const ctx=canvas.getContext('2d');
-const colorPicker=document.getElementById('colorPicker');
-const clearCanvasBtn=document.getElementById('clearCanvasBtn');
-const drawingControls=document.getElementById('drawingControls');
-const errorBox=document.getElementById('errorBox');
-let drawing=false;
+let monitoringInterval = null;
+let checkedComments = new Set();
+const secretWordInput = document.getElementById('secretWord');
+const apiKeyInput = document.getElementById('apiKey');
+const videoIdInput = document.getElementById('videoId');
+const startBtn = document.getElementById('startBtn');
+const statusDiv = document.getElementById('status');
+const mainUI = document.getElementById('mainUI');
+const winnerDisplay = document.getElementById('winnerDisplay');
+const winnerName = document.getElementById('winnerName');
+const winnerWord = document.getElementById('winnerWord');
 
-// prikaz errorja
-function showError(msg){
-  console.error(msg);
-  errorBox.textContent = "❌ " + msg;
-  errorBox.style.display='block';
+const canvas = document.getElementById('drawArea');
+const ctx = canvas.getContext('2d');
+const toolbar = document.getElementById('toolbar');
+const colorPicker = document.getElementById('colorPicker');
+const brushSize = document.getElementById('brushSize');
+const clearCanvas = document.getElementById('clearCanvas');
+
+let drawing = false;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+canvas.addEventListener('mousedown', () => drawing = true);
+canvas.addEventListener('mouseup', () => drawing = false);
+canvas.addEventListener('mousemove', draw);
+
+function draw(e) {
+    if (!drawing) return;
+    ctx.lineWidth = brushSize.value;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = colorPicker.value;
+    ctx.lineTo(e.clientX, e.clientY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX, e.clientY);
 }
 
-// retry pridobivanje liveChatId
+clearCanvas.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
 async function getLiveChatId(videoId, apiKey, retries = 10) {
-  for (let i = 0; i < retries; i++) {
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
-    const data = await res.json();
-
-    if (data.items && data.items.length && data.items[0].liveStreamingDetails.activeLiveChatId) {
-      return data.items[0].liveStreamingDetails.activeLiveChatId;
-    }
-
-    showError("Waiting for liveChatId... attempt " + (i+1));
-    await new Promise(r => setTimeout(r, 5000)); // počakaj 5s
-  }
-  throw new Error("Live chat ID ni najden. Preveri, ali je stream res LIVE in ima omogočen chat.");
-}
-
-async function checkLiveChat(){
-  const apiKey=apiKeyInput.value.trim();
-  const secretWord=secretWordInput.value.trim().toLowerCase();
-  if(!liveChatId) return;
-  try{
-    const res=await fetch(`https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`);
-    const data=await res.json();
-
-    if(data.error){
-      showError("API error: " + data.error.message);
-      return;
-    }
-
-    if(data.items){
-      for(const item of data.items){
-        const msgId=item.id;
-        const msg=item.snippet.displayMessage.toLowerCase().trim();
-        const user=item.authorDetails.displayName;
-        if(checkedMessages.has(msgId)) continue;
-        checkedMessages.add(msgId);
-        if(msg===secretWord){
-          alert(`🎉 WINNER: ${user} guessed the word "${secretWordInput.value}"`);
-          stopMonitoring();
+    for (let i = 0; i < retries; i++) {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
+        const data = await res.json();
+        if (data.items && data.items.length && data.items[0].liveStreamingDetails.activeLiveChatId) {
+            return data.items[0].liveStreamingDetails.activeLiveChatId;
         }
-      }
+        await new Promise(r => setTimeout(r, 5000));
     }
-    statusDiv.textContent=`Monitoring live chat... (${new Date().toLocaleTimeString()})`;
-  }catch(e){
-    showError("Fetch error: "+e.message);
-  }
+    throw new Error("Live chat ID ni najden.");
 }
 
-function startMonitoring(){
-  const apiKey=apiKeyInput.value.trim();
-  const videoId=videoIdInput.value.trim();
-  const secretWord=secretWordInput.value.trim();
-  errorBox.style.display='none';
-  if(!apiKey||!videoId||!secretWord){showError("Missing input fields!");return;}
+async function startMonitoring() {
+    const secretWord = secretWordInput.value.trim().toLowerCase();
+    const apiKey = apiKeyInput.value.trim();
+    const videoId = videoIdInput.value.trim();
+    if (!secretWord || !apiKey || !videoId) { alert("Manjkajo podatki!"); return; }
 
-  document.getElementById('secretWord').style.display='none'; // skrij besedo
-  canvas.style.display='block';
-  drawingControls.style.display='flex';
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+    mainUI.classList.add('hidden');
+    canvas.style.display = 'block';
+    toolbar.style.display = 'flex';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // risanje
-  canvas.onmousedown=e=>{drawing=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY);};
-  canvas.onmousemove=e=>{if(drawing){ctx.strokeStyle=colorPicker.value;ctx.lineWidth=4;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}};
-  canvas.onmouseup=canvas.onmouseout=()=>{drawing=false;};
-  clearCanvasBtn.onclick=()=>ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  startBtn.disabled=true;stopBtn.disabled=false;
-  statusDiv.textContent='Getting live chat...';
-  checkedMessages.clear();
-
-  getLiveChatId(videoId,apiKey).then(id=>{
-    liveChatId=id;
-    errorBox.style.display='none';
-    statusDiv.textContent='Monitoring live chat...';
-    checkLiveChat();
-    interval=setInterval(checkLiveChat,5000);
-  }).catch(e=>{
-    showError(e.message);
-    stopMonitoring();
-  });
+    const liveChatId = await getLiveChatId(videoId, apiKey);
+    checkComments(liveChatId, secretWord, apiKey);
+    monitoringInterval = setInterval(() => checkComments(liveChatId, secretWord, apiKey), 5000);
 }
 
-function stopMonitoring(){
-  if(interval){clearInterval(interval);interval=null;}
-  startBtn.disabled=false;stopBtn.disabled=true;
-  statusDiv.textContent='Stopped';
+async function checkComments(liveChatId, secretWord, apiKey) {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${apiKey}`);
+        const data = await res.json();
+        if (!data.items) return;
+
+        for (const item of data.items) {
+            const comment = item.snippet.displayMessage.toLowerCase().trim();
+            const username = item.authorDetails.displayName;
+            if (checkedComments.has(item.id)) continue;
+            checkedComments.add(item.id);
+
+            if (comment === secretWord) {
+                showWinner(username, secretWord);
+                stopMonitoring();
+                return;
+            }
+        }
+
+        statusDiv.textContent = "Monitoring...";
+    } catch (err) {
+        console.error("Error checking comments:", err);
+    }
 }
 
-startBtn.onclick=startMonitoring;
-stopBtn.onclick=stopMonitoring;
+function showWinner(username, word) {
+    winnerName.textContent = username;
+    winnerWord.textContent = word;
+    winnerDisplay.style.display = 'flex';
+    for (let i = 0; i < 100; i++) {
+        const conf = document.createElement('div');
+        conf.className = 'confetti';
+        conf.style.left = Math.random() * 100 + 'vw';
+        conf.style.background = ['#3b82f6','#10b981','#fbbf24','#ef4444'][Math.floor(Math.random()*4)];
+        conf.style.animationDuration = 2 + Math.random() * 3 + 's';
+        document.body.appendChild(conf);
+        setTimeout(() => conf.remove(), 3000);
+    }
+}
+
+function stopMonitoring() {
+    if (monitoringInterval) clearInterval(monitoringInterval);
+    monitoringInterval = null;
+}
+
+startBtn.addEventListener('click', startMonitoring);
 </script>
 </body>
 </html>
