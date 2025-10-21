@@ -18,7 +18,7 @@ button:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(59,130,246,0.5)
 .status{text-align:center;margin-top:16px;padding:12px;background:rgba(59,130,246,0.1);border-radius:8px;}
 
 /* Fullscreen canvas */
-#drawArea{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10;background:white;cursor:crosshair;}
+#drawArea{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10;cursor:crosshair;}
 #toolbar{display:none;position:fixed;bottom:20px;left:20px;background:rgba(30,41,59,0.8);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:11;backdrop-filter:blur(10px);box-shadow:0 0 20px rgba(59,130,246,0.3);}
 #colorPicker,#brushSize{cursor:pointer;border-radius:8px;background:transparent;}
 #clearCanvas{background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:white;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;}
@@ -97,7 +97,10 @@ const clearCanvas=document.getElementById('clearCanvas');
 
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
-canvas.style.background='white';
+
+// ✅ Inicializiraj platno belo
+ctx.fillStyle="white";
+ctx.fillRect(0,0,canvas.width,canvas.height);
 
 let drawing=false;
 let lastX=0,lastY=0;
@@ -105,6 +108,7 @@ let lastX=0,lastY=0;
 canvas.addEventListener('mousedown',e=>{drawing=true;lastX=e.clientX;lastY=e.clientY;});
 canvas.addEventListener('mouseup',()=>drawing=false);
 canvas.addEventListener('mouseout',()=>drawing=false);
+
 canvas.addEventListener('mousemove',e=>{
     if(!drawing) return;
     ctx.strokeStyle=colorPicker.value;
@@ -118,7 +122,7 @@ canvas.addEventListener('mousemove',e=>{
     lastY=e.clientY;
 });
 
-clearCanvas.addEventListener('click',()=>ctx.clearRect(0,0,canvas.width,canvas.height));
+clearCanvas.addEventListener('click',()=>ctx.fillRect(0,0,canvas.width,canvas.height));
 
 async function getLiveChatId(videoId,apiKey,retries=10){
     for(let i=0;i<retries;i++){
@@ -139,7 +143,8 @@ async function startMonitoring(){
     mainUI.classList.add('hidden');
     canvas.style.display='block';
     toolbar.style.display='flex';
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="white";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
     const liveChatId=await getLiveChatId(videoId,apiKey);
     checkComments(liveChatId,secretWord,apiKey);
